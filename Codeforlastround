@@ -1,0 +1,37 @@
+from google.colab import files
+uploaded = files.upload()
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import tensorflow as tf
+df = pd.read_excel("Book4.xlsx")
+df = pd.get_dummies(df, columns=["Position"])
+numeric_cols = ["Age", "Weight", "Height", "Max_Speed", "Avg_Speed", "Vertical_Jump", "VO2_Max", "Peak_Acceleration", "Force", "avg_HeartRate"]
+position_cols = [col for col in df.columns if col.startswith("Position_")]
+X = df[numeric_cols]
+scaler = StandardScaler()
+scaler.fit(X)
+new_player = pd.DataFrame([{
+    "Age": 19,
+    "Weight": 70,
+    "Height": 178,
+    "Max_Speed": 30,
+    "Avg_Speed": 28,
+    "Vertical_Jump": 65,
+    "VO2_Max": 50,
+    "Peak_Acceleration": 4.1,
+    "Force": 280,
+    "avg_HeartRate": 90,
+    "Position_Central Midfielder": 1
+}])
+for col in position_cols:
+    if col not in new_player.columns:
+        new_player[col] = 0
+new_player = new_player[numeric_cols + position_cols]
+new_input = np.concatenate([
+    scaler.transform(new_player[numeric_cols]),
+    new_player[position_cols].values
+], axis=1)
+model = tf.keras.models.load_model("market_value_model.keras")
+predicted_value = model.predict(new_input.astype(np.float32)).flatten()[0]
+print(f"Predicted Market Value: {round(predicted_value)} million")
